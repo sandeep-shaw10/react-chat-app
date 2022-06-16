@@ -4,10 +4,11 @@ import { useModalState } from "../../misc/custom-hooks"
 import { useProfile } from "../../context/profile"
 import ProfileAvatar from "../ProfileAvatar"
 import { useAlert, TYPE } from "../../misc/Alert"
-import { ref as dbRef, set } from 'firebase/database';
+import { ref as dbRef, update } from 'firebase/database';
 import { storage, database } from '../../misc/firebase';
 import { getDownloadURL, ref as storageRef, uploadBytes} from 'firebase/storage';
 import AvatarEditor from 'react-avatar-editor';
+import { getUserUpdates } from '../../misc/helpers';
 
 
 const fileInputTypes = ".png, .jpeg, .jpg"
@@ -65,8 +66,13 @@ export default function AvatarUploadBtn() {
 
       const downloadUrl = await getDownloadURL(avatarFileRef)
       
-      const userAvatarRef = dbRef(database, `/profiles/${profile.uid}/avatar`)
-      set(userAvatarRef, downloadUrl)
+      const updates = await getUserUpdates(
+        profile.uid,
+        'avatar',
+        downloadUrl,
+        database
+      );
+      await update(dbRef(database), updates)
 
       setIsLoading(false)
       alert('Avatar has been uploaded')

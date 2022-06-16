@@ -1,12 +1,12 @@
 import React from 'react';
-import { ref, set } from 'firebase/database';
+import { ref, set, update } from 'firebase/database';
 import { Drawer, Button, Divider } from 'rsuite';
 import { useProfile } from '../../context/profile';
 import { database } from '../../misc/firebase';
 import ProviderBlock from './ProviderBlock';
 import AvatarUploadBtn from './AvatarUploadBtn';
 import EditableInput from '../EditableInput';
-// import { getUserUpdates } from '../../misc/helpers';
+import { getUserUpdates } from '../../misc/helpers';
 import { useAlert, TYPE } from '../../misc/Alert';
 
 
@@ -16,15 +16,21 @@ export default function Dashboard({ onSignOut }) {
   const [alert] = useAlert()
 
   const onSave = async (newData) => {
-    const userNameRef = ref(database, `/profiles/${profile.uid}/name`)
-    
     try{
-      await set(userNameRef, newData)
+      const updates = await getUserUpdates(
+        profile.uid,
+        'name',
+        newData,
+        database
+      );
+      await update(ref(database), updates)
       alert('Nickname has been updated')
     }catch(err){
-      alert(err.message, TYPE.ERROR)
+      alert(`r/${err.message}`, TYPE.ERROR)
     }
   }
+
+  
 
   return <>
   <Drawer.Header>
