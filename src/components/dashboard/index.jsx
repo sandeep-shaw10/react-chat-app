@@ -1,5 +1,5 @@
 import React from 'react';
-import { ref, set, update } from 'firebase/database';
+import { ref, update } from 'firebase/database';
 import { Drawer, Button, Divider } from 'rsuite';
 import { useProfile } from '../../context/profile';
 import { database } from '../../misc/firebase';
