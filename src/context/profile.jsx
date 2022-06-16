@@ -2,7 +2,7 @@ import React, {createContext, useReducer, useEffect} from 'react'
 import { useContext } from 'react'
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, database } from '../misc/firebase';
-import { onValue, ref, off } from 'firebase/database';
+import { onValue, ref } from 'firebase/database';
 
 
 const initialState = {profile: null, isLoading: true}
@@ -30,11 +30,12 @@ export default function ProfileProvider({ children }) {
     useEffect(() => {
 
         let dbRef;
+        let dbListener;
 
         const authUnsub = onAuthStateChanged(auth, (authObj) => {
             if(authObj){
                 dbRef = ref(database, `/profiles/${authObj.uid}`)
-                onValue(dbRef, (snap) => {
+                dbListener = onValue(dbRef, (snap) => {
                     const {name, createdAt, avatar} = snap.val()
                     const data = {
                         name, createdAt, avatar,
@@ -46,7 +47,7 @@ export default function ProfileProvider({ children }) {
             }
             // Not sign in
             else{
-                if(dbRef){ off(dbRef) }
+                if(dbRef){ dbListener() }
                 dispatch({type:'ERROR'})
             }
         })
@@ -54,7 +55,7 @@ export default function ProfileProvider({ children }) {
         // unmount
         return () => {
             authUnsub()
-            if(dbRef){ dbRef.off() }
+            if(dbRef){ return dbListener() }
         }
     }, [])
 

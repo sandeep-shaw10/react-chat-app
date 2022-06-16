@@ -12,7 +12,9 @@ function App() {
   return (
     <ProfileProvider>
       <Routes>
-        <Route path="/" element={<PrivateRoute render={<Home/>}/>}/>
+        <Route path="/" element={<PrivateRoute render={<Home/>}/>}>
+          <Route path="/chat/:id" element={<>Hello</>} />
+        </Route>
         <Route path="/signin" element={<PublicRoute render={<SignIn/>}/>}/>
       </Routes>
     </ProfileProvider>
