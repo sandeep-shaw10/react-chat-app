@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router';
 import { database } from '../../../misc/firebase';
 import { transformToArrWithId } from '../../../misc/helpers';
 import MessageItem from './MessageItem';
-import { get, query, ref, orderByChild, equalTo, onValue } from 'firebase/database';
-
+import { query, ref, orderByChild, equalTo, onValue, runTransaction } from 'firebase/database';
+import { useAlert } from '../../../misc/Alert';
 
 
 const Messages = () => {
+
+  const [alert] = useAlert()
   const { chatId } = useParams();
   const [messages, setMessages] = useState(null);
 
@@ -24,24 +26,38 @@ const Messages = () => {
     }, error => {
       console.log(error)
     })
-    
-    // messagesRef
-    //   .orderByChild('roomId')
-    //   .equalTo(chatId)
-    //   .on('value', snap => {
-    //     const data = transformToArrWithId(snap.val());
-
-    //     setMessages(data);
-    //   });
-
     return () => unSub();
   }, [chatId]);
+
+
+  const handleAdmin = useCallback(
+    async uid => {
+      const adminsRef = ref(database, `/rooms/${chatId}/admins`);
+      let alertMsg;
+      runTransaction(adminsRef, (admins) => {
+        if(admins){
+          if (admins[uid]) {
+            admins[uid] = null;
+            alertMsg = 'Admin permission removed';
+          } else {
+            admins[uid] = true;
+            alertMsg = 'Admin permission granted';
+          }
+        }
+        return admins;
+      })
+      alert(alertMsg);
+    },
+    [chatId]
+  );
 
   return (
     <ul className="msg-list custom-scroll">
       {isChatEmpty && <li>No messages yet</li>}
       {canShowMessages &&
-        messages.map(msg => <MessageItem key={msg.id} message={msg} />)}
+        messages.map(msg => (
+        <MessageItem key={msg.id} message={msg} handleAdmin={handleAdmin}/>
+      ))}
     </ul>
   );
 };

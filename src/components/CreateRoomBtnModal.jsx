@@ -5,7 +5,7 @@ import { useModalState } from '../misc/custom-hooks';
 import FormGroup from 'rsuite/esm/FormGroup';
 import FormControlLabel from 'rsuite/esm/FormControlLabel';
 import FormControl from 'rsuite/esm/FormControl';
-import { database } from '../misc/firebase';
+import { database, auth } from '../misc/firebase';
 import { useAlert, TYPE } from '../misc/Alert';
 import { ref, child, push, set, serverTimestamp } from 'firebase/database';
 
@@ -45,6 +45,9 @@ const CreateRoomBtnModal = () => {
         const newRoomdata = {
           ...formValue,
           createdAt: serverTimestamp(),
+          admins: {
+            [auth.currentUser.uid]: true,
+          }
         };
     
         try {

@@ -1,13 +1,13 @@
 import React, { useCallback } from 'react';
 import { Button, Drawer } from 'rsuite';
 import DashboardIcon from '@rsuite/icons/Dashboard';
-// import { ref, set } from 'firebase/database';
+import { ref, set } from 'firebase/database';
 import { useModalState, useMediaQuery } from '../../misc/custom-hooks';
 import Dashboard from '.';
 import { signOut } from 'firebase/auth';
 import { auth, database } from '../../misc/firebase';
 import { useAlert, TYPE } from '../../misc/Alert'
-// import { isOfflineForDatabase } from '../../context/profile.context';
+import { isOfflineForDatabase } from '../../context/profile';
 
 
 
@@ -15,26 +15,18 @@ const DashboardToggle = () => {
   const { isOpen, close, open } = useModalState();
   const isMobile = useMediaQuery('(max-width: 992px)');
   const [alert] = useAlert()
+
   const onSignOut = useCallback(() => {
-    signOut(auth).then(() => {
-      alert('Signed Out')
-      close()
+    const dbRef = ref(database, `/status/${auth.currentUser.uid}`)
+    set(dbRef, isOfflineForDatabase).then(()=>{
+      signOut(auth).then(() => {
+        alert('Signed Out')
+      })
     }).catch((err) => {
       alert(`Failed: ${err}`, TYPE.ERROR)
     })
   }, [close])
 
-//   const onSignOut = useCallback(() => {
-//     set(ref(database, `/status/${auth.currentUser.uid}`), isOfflineForDatabase)
-//       .then(() => {
-//         auth.signOut();
-//         Alert.info('Signed out', 4000);
-//         close();
-//       })
-//       .catch(err => {
-//         Alert.error(err.message, 4000);
-//       });
-//   }, [close]);
 
   return (
     <>

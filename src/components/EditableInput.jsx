@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Input, InputGroup } from "rsuite";
-import { useAlert } from "../misc/Alert";
+import { TYPE, useAlert } from "../misc/Alert";
 import CheckIcon from '@rsuite/icons/Check';
 import EditIcon from '@rsuite/icons/Edit';
 import CloseIcon from '@rsuite/icons/Close';
@@ -14,6 +14,7 @@ const EditableInput = ({
   placeholder = "Write your value",
   emptyMsg = "Input is empty",
   wrapperClassName = "",
+  inputAs = null,
   ...inputProps
 }) => {
   const [input, setInput] = useState(initialValue);
@@ -31,10 +32,10 @@ const EditableInput = ({
   }, [initialValue]);
 
   const onSaveClick = async () => {
-    const trimmed = input.trim();
+    const trimmed = input ? input.trim() : ""
 
     if (trimmed === "") {
-      alert(emptyMsg);
+      alert(emptyMsg, TYPE.ERROR);
       return;
     }
 
