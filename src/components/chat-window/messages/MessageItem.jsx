@@ -8,8 +8,20 @@ import { useCurrentRoom } from '../../../context/current-room';
 import { auth } from '../../../misc/firebase';
 import { useHover, useMediaQuery } from '../../../misc/custom-hooks'
 import IconBtnControl from './IconBtnControl';
-import CloseIcon from '@rsuite/icons/Close';
+import ImgBtnModal from './ImgBtnModal';
 
+
+const renderFileMessage = file => {
+  if (file.contentType.includes('image')) {
+    return (
+      <div className="height-220">
+        <ImgBtnModal src={file.url} fileName={file.name} />
+      </div>
+    );
+}
+
+  return <a href={file.url}>Download {file.name}</a>;
+};
 
 const HeartSvg = React.forwardRef((props, ref) => (
   <svg {...props} width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024" ref={ref}>
@@ -26,7 +38,7 @@ const CloseSvg = React.forwardRef((props, ref) => (
 
 const MessageItem = ({ message, handleAdmin, handleLike, handleDelete }) => {
 
-  const { author, createdAt, text, likes, likeCount } = message;
+  const { author, createdAt, text, file, likes, likeCount } = message;
   const [selfRef, isHovered] = useHover();
   const isMobile = useMediaQuery('(max-width: 992px)');
   const isAdmin = useCurrentRoom(v => v.isAdmin);
@@ -88,7 +100,8 @@ const MessageItem = ({ message, handleAdmin, handleLike, handleDelete }) => {
       </div>
 
       <div>
-        <span className="word-breal-all">{text}</span>
+        {text && <span className="word-breal-all">{text}</span>}
+        {file && renderFileMessage(file)}
       </div>
     </li>
   );
