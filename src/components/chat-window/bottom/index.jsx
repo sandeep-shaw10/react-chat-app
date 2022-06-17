@@ -7,6 +7,7 @@ import { database } from '../../../misc/firebase'
 import { useAlert, TYPE } from '../../../misc/Alert'
 import { ref, child, push, update, serverTimestamp } from 'firebase/database'
 import AttachmentBtnModal from './AttachmentBtnModal';
+import AudioMsgBtn from './AudioMsgBtn';
 
 
 
@@ -104,6 +105,7 @@ const Bottom = () => {
     <div>
       <InputGroup>
       <AttachmentBtnModal afterUpload={afterUpload} />
+      <AudioMsgBtn afterUpload={afterUpload} />
         <Input
           placeholder="Write a new message here..."
           value={input}

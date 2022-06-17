@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router';
-import { database, auth } from '../../../misc/firebase';
+import { database, auth, storage } from '../../../misc/firebase';
 import { transformToArrWithId } from '../../../misc/helpers';
 import MessageItem from './MessageItem';
 import { query, ref, orderByChild, equalTo, onValue, runTransaction, update } from 'firebase/database';
 import { useAlert, TYPE } from '../../../misc/Alert';
+import {deleteObject, ref as storageRef} from 'firebase/storage'
 
 
 const Messages = () => {
@@ -78,7 +79,7 @@ const Messages = () => {
 
 
   const handleDelete = useCallback(
-    async msgId => {
+    async (msgId, file) => {
       if (!window.confirm('Delete this message?')) return
 
       const isLast = messages[messages.length - 1].id === msgId;
@@ -101,6 +102,15 @@ const Messages = () => {
         alert('Message has been deleted', TYPE.SUCCESS);
       } catch (err) {
         alert(err.message, TYPE.ERROR);
+      }
+
+      if (file) {
+        try {
+          const fileRef = storageRef(storage, `chat/${chatId}/${file.name}`)
+          deleteObject(fileRef)
+        } catch (err) {
+          alert(err.message, TYPE.ERROR);
+        }
       }
     },
     [chatId, messages]
