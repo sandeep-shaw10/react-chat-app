@@ -1,34 +1,97 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useReducer } from 'react';
 import { useParams } from 'react-router';
 import { database, auth, storage } from '../../../misc/firebase';
-import { transformToArrWithId } from '../../../misc/helpers';
+import { transformToArrWithId, groupBy } from '../../../misc/helpers';
 import MessageItem from './MessageItem';
-import { query, ref, orderByChild, equalTo, onValue, runTransaction, update } from 'firebase/database';
+import { query, ref, orderByChild, equalTo, onValue, runTransaction, update, limitToLast as lastLimit } from 'firebase/database';
 import { useAlert, TYPE } from '../../../misc/Alert';
 import {deleteObject, ref as storageRef} from 'firebase/storage'
+import { Button } from 'rsuite';
+
+
+const loadTime = {initCount: 0, display:true, messages: null}
+function reducer(state, action) {
+  switch (action.type) {
+    case 'init':
+      return {...state, initCount: action.value};
+    case 'msg':
+      return {...state, messages: action.data}
+    case 'check':
+        return {...state, display: false}
+    default:
+      return state
+  }
+}
+
+
+const messagesRef = ref(database, 'messages');
+const PAGE_SIZE = 15
+
+function shouldScrollToBottom({scrollHeight, scrollTop, clientHeight}, threshold = 30) {
+  const percentage = (100 * scrollTop) / (scrollHeight - clientHeight) || 0;
+  return percentage > threshold;
+}
 
 
 const Messages = () => {
 
+  const [{messages, initCount, display}, dispatch] = useReducer(reducer, loadTime);
   const [alert] = useAlert()
   const { chatId } = useParams();
-  const [messages, setMessages] = useState(null);
-
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const selfRef = useRef();
   const isChatEmpty = messages && messages.length === 0;
   const canShowMessages = messages && messages.length > 0;
 
-  useEffect(() => {
+  const checkLoad = (message) => {
+    if(message){
+      dispatch({type: 'init', value: message.length})
+      if(initCount === messages.length){
+        dispatch({type: 'check'})
+      }
+    }
+    return true
+  }
 
-    const messagesRef = ref(database, 'messages');
-    const queryRef = query(messagesRef, orderByChild('roomId'), equalTo(chatId))
+  const loadMessages = useCallback( limitToLast => {
+    const node = selfRef.current
+    const queryRef = query(messagesRef, orderByChild('roomId'), equalTo(chatId), lastLimit(limitToLast || PAGE_SIZE))
     const unSub = onValue(queryRef, (snap) => {
-        const data = transformToArrWithId(snap.val());
-        setMessages(data)
+      const data = transformToArrWithId(snap.val());
+      dispatch({type: 'msg', data})
+      if(shouldScrollToBottom(node)){
+        node.scrollTop = node.scrollHeight
+      }
+      setLimit(p => p + PAGE_SIZE)
     }, error => {
-      console.log(error)
+      alert(error.message, TYPE.ERROR)
     })
+    return unSub
+  }, [chatId])
+
+
+  const onLoadMore = useCallback(() => {
+    const node = selfRef.current;
+    const oldHeight = node.scrollHeight;
+
+    loadMessages(limit);
+
+    setTimeout(() => {
+      const newHeight = node.scrollHeight;
+      node.scrollTop = newHeight - oldHeight;
+    }, 200);
+
+  }, [loadMessages, limit]);
+
+
+  useEffect(() => {
+    const node = selfRef.current;
+    const unSub = loadMessages()
+    setTimeout(() => {
+      node.scrollTop = node.scrollHeight;
+    }, 200);
     return () => unSub();
-  }, [chatId]);
+  }, [loadMessages]);
 
 
   const handleAdmin = useCallback(
@@ -116,13 +179,43 @@ const Messages = () => {
     [chatId, messages]
   );
 
+
+  const renderMessages = () => {
+    const groups = groupBy(messages, item =>
+      new Date(item.createdAt).toDateString()
+    );
+
+    const items = [];
+
+    Object.keys(groups).forEach(date => {
+      items.push(
+        <li key={date} className="text-center mb-1 padded">
+          {date}
+        </li>
+      );
+
+      const msgs = groups[date].map(msg => (
+        <MessageItem key={msg.id} message={msg} handleAdmin={handleAdmin} handleLike={handleLike} handleDelete={handleDelete}/>
+      ));
+
+      items.push(...msgs);
+    });
+
+    return items;
+  };
+
+  
   return (
-    <ul className="msg-list custom-scroll">
+    <ul ref={selfRef} className="msg-list custom-scroll">
+    {display && messages && messages.length >= PAGE_SIZE && (
+      <li className="text-center mt-2 mb-2" onClick={() => checkLoad(messages)}>
+        <Button onClick={onLoadMore} color="green" appearance='primary'>
+          Load more
+        </Button>
+      </li>
+    )}
       {isChatEmpty && <li>No messages yet</li>}
-      {canShowMessages &&
-        messages.map(msg => (
-        <MessageItem key={msg.id} message={msg} handleAdmin={handleAdmin} handleLike={handleLike} handleDelete={handleDelete} />
-      ))}
+      {canShowMessages && renderMessages()}
     </ul>
   );
 };
