@@ -1,0 +1,32 @@
+{
+  "short_name": "Chat App",
+  "name": "React Chat App",
+  "id": "/",
+  "description": "Chat Application using Firebase",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon",
+      "purpose": "maskable"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "start_url": "http://localhost:3000/",
+  "scope": "http://localhost:3000/",
+  "prefer_related_applications": true
+}
