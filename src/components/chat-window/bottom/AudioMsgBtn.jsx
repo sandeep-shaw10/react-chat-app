@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { InputGroup } from 'rsuite';
-import { ReactMic } from 'react-mic';
+// import { ReactMic } from 'react-mic';
 import { useParams } from 'react-router-dom';
 import { storage } from '../../../misc/firebase';
 import { Icon } from '@rsuite/icons';
@@ -62,12 +62,12 @@ const AudioMsgBtn = ({ afterUpload }) => {
       className={isRecording ? 'animate-blink' : ''}
     >
       <Icon as={AudioSvg} />
-      <ReactMic
+      {/* <ReactMic
         record={isRecording}
         className="d-none"
         onStop={onUpload}
         mimeType="audio/mp3"
-      />
+      /> */}
     </InputGroup.Button>
   );
 };
